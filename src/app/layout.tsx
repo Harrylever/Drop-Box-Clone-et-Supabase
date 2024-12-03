@@ -1,9 +1,11 @@
 import type { Metadata } from "next"
 import localFont from "next/font/local"
 import "./globals.css"
-import { ClerkProvider } from "@clerk/nextjs"
 import Header from "@/components/Header"
+import { Toaster } from "react-hot-toast"
+import { ClerkProvider } from "@clerk/nextjs"
 import { ThemeProvider } from "@/components/theme-provider"
+import MyQueryClientProvider from "./query-client.provider"
 
 const inter = localFont({
   src: "./fonts/inter.ttf",
@@ -23,19 +25,22 @@ export default function RootLayout({
 }>) {
   return (
     <ClerkProvider afterSignOutUrl="/">
-      <html lang="en">
-        <body className={`${inter.variable} antialiased`}>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-            disableTransitionOnChange
-          >
-            <Header />
-            {children}
-          </ThemeProvider>
-        </body>
-      </html>
+      <MyQueryClientProvider>
+        <html lang="en">
+          <body className={`${inter.variable} antialiased`}>
+            <ThemeProvider
+              attribute="class"
+              defaultTheme="system"
+              enableSystem
+              disableTransitionOnChange
+            >
+              <Header />
+              {children}
+              <Toaster />
+            </ThemeProvider>
+          </body>
+        </html>
+      </MyQueryClientProvider>
     </ClerkProvider>
   )
 }

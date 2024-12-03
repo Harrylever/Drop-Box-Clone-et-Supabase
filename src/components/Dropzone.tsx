@@ -1,14 +1,17 @@
 "use client"
+
 import { cn } from "@/lib/utils"
-import { createClient } from "@/utils/supabase/client"
+import toast from "react-hot-toast"
+import prettyBytes from "pretty-bytes"
 import { useUser } from "@clerk/nextjs"
-import { useState } from "react"
 import DropzoneComponent from "react-dropzone"
+import { useQueryClient } from "@tanstack/react-query"
+import { useUploadFile } from "@/utils/supabase/requests/hooks"
 
 const Dropzone = () => {
-  const supabase = createClient()
-  const [loading, setLoading] = useState(false)
-  const { isLoaded, isSignedIn, user } = useUser()
+  const { user } = useUser()
+  const queryClient = useQueryClient()
+  const { mutateAsync: uploadFile, isPending } = useUploadFile()
 
   const onDrop = (acceptedFiles: File[]) => {
     acceptedFiles.forEach((file) => {
@@ -26,30 +29,24 @@ const Dropzone = () => {
   }
 
   const uploadPost = async (selectedFile: File) => {
-    if (loading) return
+    if (isPending) return
     if (!user) return
 
-    setLoading(true)
+    const toastId = toast.loading("Uploading file...")
 
-    const fileExt = selectedFile.name.split(".").pop()
-    const filePath = `users/${user.id}/${Math.random()}-${
-      selectedFile.name.split(".")[0]
-    }.${fileExt}`
-
-    const { data, error: uploadError } = await supabase.storage
-      .from("dropbox-clone-bucket")
-      .upload(filePath, selectedFile)
-
-    if (uploadError) {
-      throw uploadError
+    try {
+      const { success } = await uploadFile({ userId: user.id, selectedFile })
+      if (success) {
+        toast.success("File uploaded successfully", { id: toastId })
+        queryClient.invalidateQueries({ queryKey: ["fetch-supabase-docs"] })
+      }
+    } catch (error) {
+      toast.error("Error uploading file", { id: toastId })
     }
-
-    console.log({ filePath, data })
-    setLoading(false)
   }
 
-  // max file size is 20MB
-  const maxSize = 20971520
+  // max file size is 1MB
+  const maxSize = 1258291.2
 
   return (
     <DropzoneComponent
@@ -80,13 +77,24 @@ const Dropzone = () => {
               )}
             >
               <input {...getInputProps()} />
-              {!isDragActive && "Click here to drop a file to upload!"}
-              {isDragActive && !isDragReject && "Drop to upload this file!"}
-              {isDragReject && "File type not accepted, sorry!"}
+              {!isDragActive && (
+                <span>Click here to drop a file to upload!</span>
+              )}
+              {isPending && <span className="ml-2">Uploading...</span>}
+              {isDragActive && !isDragReject && (
+                <span className="ml-2">Drop to upload this file!</span>
+              )}
+              {isDragReject && (
+                <span className="ml-2">File type not accepted, sorry!</span>
+              )}
               {isFileTooLarge && (
-                <div className="text-danger mt-2">File is too large</div>
+                <span className="text-red-500 ml-2">File is too large</span>
               )}
             </div>
+
+            <p className="text-gray-500 text-sm font-normal mt-2">
+              Max File Size: {prettyBytes(maxSize)}
+            </p>
           </section>
         )
       }}
