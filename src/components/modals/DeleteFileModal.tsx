@@ -9,11 +9,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import toast from "react-hot-toast"
 import { useUser } from "@clerk/nextjs"
 import { useAppStore } from "@/store/store"
 import { useQueryClient } from "@tanstack/react-query"
 import { useDeleteFile } from "@/utils/supabase/requests/hooks"
-import toast from "react-hot-toast"
 
 const DeleteFileModal = () => {
   const { user } = useUser()
@@ -42,7 +42,9 @@ const DeleteFileModal = () => {
       }
     } catch (error) {
       toast.error("Failed to delete file!", { id: toastId })
+      setFilename("")
       setIsDeleteModalOpen(false)
+      return error
     }
   }
 

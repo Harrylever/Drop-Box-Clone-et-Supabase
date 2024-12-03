@@ -43,6 +43,7 @@ const RenameFileModal = () => {
     } catch (error) {
       toast.error("Failed to rename file", { id: toastId })
       setIsRenameModalOpen(false)
+      return error
     }
   }
 

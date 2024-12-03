@@ -42,6 +42,7 @@ const Dropzone = () => {
       }
     } catch (error) {
       toast.error("Error uploading file", { id: toastId })
+      return error
     }
   }
 
